@@ -53,4 +53,7 @@ def url2guid():
     global parsed_values
     for obj in parsed_values:
         obj["guid"] = obj["guid"][45:]
-    print(parsed_values)
+
+def get_parsed_values():
+    global parsed_values
+    return parsed_values

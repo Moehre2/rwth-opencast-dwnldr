@@ -4,7 +4,10 @@ import sys
 import os.path
 import html_parser
 
+videos = []
+
 def parse_file(htmlfile):
+    global videos
     if not html_parser.check_file_ending(htmlfile):
         print("Error: Wrong file ending! Expected html file...")
         sys.exit(3)
@@ -12,6 +15,8 @@ def parse_file(htmlfile):
         print("Error: Could not parse html file...")
         sys.exit(4)
     html_parser.url2guid()
+    videos = html_parser.get_parsed_values()
+    print(videos)
 
 def main():
     print("rwth-opencast-dwnldr 0.1")
