@@ -8,7 +8,10 @@ def parse_file(htmlfile):
     if not html_parser.check_file_ending(htmlfile):
         print("Error: Wrong file ending! Expected html file...")
         sys.exit(3)
-    html_parser.parse_file(htmlfile)
+    if not html_parser.parse_file(htmlfile):
+        print("Error: Could not parse html file...")
+        sys.exit(4)
+    html_parser.url2guid()
 
 def main():
     print("rwth-opencast-dwnldr 0.1")

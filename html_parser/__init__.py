@@ -23,7 +23,7 @@ class CustomHTMLParser(HTMLParser):
         if parsing_level == 1:
             parsing_buffer = data[:-2]
         elif parsing_level == 3:
-            parsed_values.append({"name": parsing_buffer, "url": data})
+            parsed_values.append({"name": parsing_buffer, "guid": data})
             parsing_level = 4
             parsing_buffer = ""
 
@@ -39,10 +39,18 @@ def check_file_ending(inputfile):
 
 def parse_file(htmlfilepath):
     global parsed_values
-    parse_successful = False
-    htmlfile = open(htmlfilepath, "r")
-    parser = CustomHTMLParser()
-    parser.feed(htmlfile.read())
-    htmlfile.close()
-    print(parsed_values)
+    parse_successful = True
+    try:
+        htmlfile = open(htmlfilepath, "r")
+        parser = CustomHTMLParser()
+        parser.feed(htmlfile.read())
+        htmlfile.close()
+    except:
+        parse_successful = False
     return parse_successful
+
+def url2guid():
+    global parsed_values
+    for obj in parsed_values:
+        obj["guid"] = obj["guid"][45:]
+    print(parsed_values)
