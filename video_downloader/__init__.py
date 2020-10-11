@@ -1,6 +1,7 @@
 # (c) 2020 Moehre2
 
 import os.path
+import shutil
 import http.client
 
 outputfolder = ""
@@ -14,6 +15,9 @@ def check_folder(folder_name):
     if os.path.exists(folder_name):
         if os.path.isfile(folder_name):
             os.remove(folder_name)
+        elif os.path.isdir(folder_name):
+            shutil.rmtree(folder_name)
+            os.makedirs(folder_name)
     else:
         os.makedirs(folder_name)
 
