@@ -34,7 +34,19 @@ def get_playlist(output, guid):
     return success
 
 def download_m3u8(output, guid, element):
-    print("=>", element)
+    conn = http.client.HTTPSConnection("streaming.rwth-aachen.de")
+    conn.request("GET", "/rwth/smil:engage-player_" + guid + "_presentation.smil/" + element)
+    req = conn.getresponse()
+    success = (req.status == 200)
+    if not success:
+        print(req.status, req.reason)
+    else:
+        data = req.read();
+        with open(output + "/" + element, "wb") as filewriter:
+            filewriter.write(data)
+            filewriter.close()
+        print("=>", element)
+    conn.close()
 
 def download_binary(output, guid, element):
     print("=>", element)
