@@ -29,10 +29,18 @@ def get_playlist(output, guid):
     else:
         data = req.read()
         playlist_buffer = data.split(b"\n")
-        print(playlist_buffer)
         print("=> playlist.m3u8")
     conn.close()
     return success
+
+def download_element(output, guid, element):
+    print(element)
+
+def download_playlist(output, guid):
+    global playlist_buffer
+    for elem in playlist_buffer:
+        if not elem == b"" and not elem[:1] == b"#":
+            download_element(output, guid, elem.decode("utf-8"))
 
 def download(video):
     global outputfolder
@@ -42,4 +50,5 @@ def download(video):
     else:
         output = outputfolder + "/" + video["name"]
     check_folder(output)
-    get_playlist(output, video["guid"])
+    if get_playlist(output, video["guid"]):
+        download_playlist(output, video["guid"])
