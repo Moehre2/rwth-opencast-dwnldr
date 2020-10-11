@@ -33,8 +33,17 @@ def get_playlist(output, guid):
     conn.close()
     return success
 
+def download_m3u8(output, guid, element):
+    print("=>", element)
+
+def download_binary(output, guid, element):
+    print("=>", element)
+
 def download_element(output, guid, element):
-    print(element)
+    if element.endswith(".m3u8"):
+        download_m3u8(output, guid, element)
+    else:
+        download_binary(output, guid, element)
 
 def download_playlist(output, guid):
     global playlist_buffer
