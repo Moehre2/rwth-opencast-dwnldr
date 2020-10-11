@@ -1,0 +1,48 @@
+# (c) 2020 Moehre2
+
+from html.parser import HTMLParser
+
+parsed_values = []
+parsing_level = 0
+parsing_buffer = ""
+
+class CustomHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        global parsing_level
+        if parsing_level == 0 and tag == "p":
+            parsing_level = 1
+        elif parsing_level == 1 and tag == "video":
+            parsing_level = 2
+        elif parsing_level == 2 and tag == "source":
+            parsing_level = 3
+
+    def handle_data(self, data):
+        global parsed_values
+        global parsing_level
+        global parsing_buffer
+        if parsing_level == 1:
+            parsing_buffer = data[:-2]
+        elif parsing_level == 3:
+            parsed_values.append({"name": parsing_buffer, "url": data})
+            parsing_level = 4
+            parsing_buffer = ""
+
+    def handle_endtag(self, tag):
+        global parsing_level
+        if parsing_level == 4 and tag == "video":
+            parsing_level = 5
+        if tag == "p":
+            parsing_level = 0
+
+def check_file_ending(inputfile):
+    return inputfile.endswith(('.html', '.htm'))
+
+def parse_file(htmlfilepath):
+    global parsed_values
+    parse_successful = False
+    htmlfile = open(htmlfilepath, "r")
+    parser = CustomHTMLParser()
+    parser.feed(htmlfile.read())
+    htmlfile.close()
+    print(parsed_values)
+    return parse_successful
