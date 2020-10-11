@@ -33,6 +33,11 @@ def get_playlist(output, guid):
     conn.close()
     return success
 
+def parse_m3u8(output, guid, m3u8file):
+    for elem in m3u8file:
+        if not elem == b"" and not elem[:1] == b"#":
+            download_element(output, guid, elem.decode("utf-8"))
+
 def download_m3u8(output, guid, element):
     conn = http.client.HTTPSConnection("streaming.rwth-aachen.de")
     conn.request("GET", "/rwth/smil:engage-player_" + guid + "_presentation.smil/" + element)
@@ -46,6 +51,7 @@ def download_m3u8(output, guid, element):
             filewriter.write(data)
             filewriter.close()
         print("=>", element)
+        parse_m3u8(output, guid, data.split(b"\n"))
     conn.close()
 
 def download_binary(output, guid, element):
@@ -59,9 +65,7 @@ def download_element(output, guid, element):
 
 def download_playlist(output, guid):
     global playlist_buffer
-    for elem in playlist_buffer:
-        if not elem == b"" and not elem[:1] == b"#":
-            download_element(output, guid, elem.decode("utf-8"))
+    parse_m3u8(output, guid, playlist_buffer)
 
 def download(video):
     global outputfolder
