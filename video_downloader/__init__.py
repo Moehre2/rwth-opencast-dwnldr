@@ -55,7 +55,19 @@ def download_m3u8(output, guid, element):
     conn.close()
 
 def download_binary(output, guid, element):
-    print("=>", element)
+    conn = http.client.HTTPSConnection("streaming.rwth-aachen.de")
+    conn.request("GET", "/rwth/smil:engage-player_" + guid + "_presentation.smil/" + element)
+    req = conn.getresponse()
+    success = (req.status == 200)
+    if not success:
+        print(req.status, req.reason)
+    else:
+        with open(output + "/" + element, "wb") as filewriter:
+            while chunk := req.read(512):
+                filewriter.write(chunk)
+            filewriter.close()
+        print("=>", element)
+    conn.close()
 
 def download_element(output, guid, element):
     if element.endswith(".m3u8"):
