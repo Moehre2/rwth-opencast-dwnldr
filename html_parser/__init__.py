@@ -52,7 +52,7 @@ def parse_file(htmlfilepath):
 def url2guid():
     global parsed_values
     for obj in parsed_values:
-        obj["guid"] = obj["guid"][45:]
+        obj["guid"] = obj["guid"][-36:]
 
 def get_parsed_values():
     global parsed_values
