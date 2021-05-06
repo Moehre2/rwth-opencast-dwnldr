@@ -6,6 +6,7 @@ import os.path
 import shutil
 
 playlist_buffer = []
+qualities = []
 
 def get_argvar(argnum, argname, text):
     if len(sys.argv) > argnum:
@@ -39,6 +40,54 @@ def check_folder(folder_name):
     else:
         os.makedirs(folder_name)
 
+def list_qualities():
+    global playlist_buffer, qualities
+    temp = []
+    for elem in playlist_buffer:
+        if elem == b"":
+            pass
+        elif elem[:17] == b"#EXT-X-STREAM-INF":
+            temp = elem[18:].lower().split(b",")
+        elif elem[:1] != b"#":
+            qualities.append({"terms": temp, "link": elem})
+    resolutions = []
+    for q in qualities:
+        res = 0
+        for t in q["terms"]:
+            if t[:11] == b"resolution=":
+                temp = t[11:].split(b"x")
+                if len(temp) == 2:
+                    res = int(temp[0]) * int(temp[1])
+        resolutions.append(res)
+    minres = min(resolutions)
+    maxres = max(resolutions)
+    mini = maxi = -1
+    for i in range(0, len(resolutions)):
+        if resolutions[i] == 0:
+            pass
+        elif resolutions[i] == minres:
+            mini = i
+        elif resolutions[i] == maxres:
+            maxi = i
+    qualities[mini]["terms"].append(b"min")
+    qualities[maxi]["terms"].append(b"max")
+    for i in range(0, len(qualities)):
+        line = str(i) + ")"
+        for t in qualities[i]["terms"]:
+            line = line + " " + t.decode("utf-8")
+        print(line)
+
+def get_quality_index(quality):
+    global qualities
+    for i in range(0, len(qualities)):
+        if quality == str(i):
+            return i
+        else:
+            for t in qualities[i]["terms"]:
+                if quality == t.decode("utf-8"):
+                    return i
+    return -1;
+
 def main():
     print("rwth-opencast-dwnldr 0.2")
     guid = get_argvar(1, "guid", "Please enter the guid of the video.")
@@ -46,6 +95,12 @@ def main():
         exit(1)
     name = get_argvar(2, "name", "Please enter a name for the video (without file endings)")
     check_folder(name)
+    list_qualities()
+    quality = get_argvar(3, "quality", "Please enter one of the qualities")
+    qindex = get_quality_index(quality)
+    if qindex < 0:
+        print("Cannot find the specified quality")
+        exit(2)
 
 try:
     main()
