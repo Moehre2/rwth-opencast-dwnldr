@@ -2,9 +2,10 @@
 
 import sys
 import http.client
-import os.path
+import os
 import shutil
 import math
+import subprocess
 
 playlist_buffer = []
 qualities = []
@@ -132,6 +133,17 @@ def download_m3u8(guid, name, element):
     conn.close()
     return success
 
+def vlc_convert(vlcpath, name, element):
+    vlccmd = [vlcpath, "-I", "dummy", "-vv", os.path.join(os.getcwd(), name, element), "--sout=#transcode{vcodec=h264,vb=1024,acodec=mp4a,ab=192,channels=2,deinterlace}:standard{access=file,mux=ts,dst=" + os.path.join(os.getcwd(), name + ".mp4") + "}", "vlc://quit"]
+    print("Converting the video. This may take some time...")
+    p = subprocess.Popen(vlccmd)
+    p.wait()
+    return p.returncode
+
+def delete_raw_files(name):
+    if os.path.exists(name) and os.path.isdir(name):
+        shutil.rmtree(name)
+
 def main():
     global qualities
     print("rwth-opencast-dwnldr 0.2")
@@ -147,8 +159,28 @@ def main():
         print("Cannot find the specified quality")
         exit(3)
     print("Starting download...")
-    if not download_m3u8(guid, name, qualities[qindex]["link"].decode("utf-8")):
+    element = qualities[qindex]["link"].decode("utf-8")
+    if not download_m3u8(guid, name, element):
         exit(4)
+    vlc = get_argvar(4, "vlc", "Do you want to convert the downloaded files with VLC Media Player (Y/n)")
+    if vlc == "n":
+        exit(0)
+    elif vlc != "Y":
+        print("Unknown option. Aborting.")
+        exit(5)
+    vlcpath = get_argvar(5, "vlcpath", "Please enter the VLC path (leave empty to load from path envvar)")
+    if vlcpath == "":
+        vlcpath = "vlc"
+    if vlc_convert(vlcpath, name, element) != 0:
+        print("Error while converting!")
+        exit(6)
+    deleterawfiles = get_argvar(6, "deleterawfiles", "Do you want to delete the raw files and just keep the converted video? (Y/n)")
+    if deleterawfiles == "n":
+        exit(0)
+    elif deleterawfiles != "Y":
+        print("Unknown option. Aborting.")
+        exit(6)
+    delete_raw_files(name)
 
 try:
     main()
