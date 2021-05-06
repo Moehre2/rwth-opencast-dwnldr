@@ -4,6 +4,7 @@ import sys
 import http.client
 import os.path
 import shutil
+import math
 
 playlist_buffer = []
 qualities = []
@@ -86,13 +87,57 @@ def get_quality_index(quality):
             for t in qualities[i]["terms"]:
                 if quality == t.decode("utf-8"):
                     return i
-    return -1;
+    return -1
+
+def download_part(guid, name, part):
+    conn = http.client.HTTPSConnection("streaming.rwth-aachen.de")
+    conn.request("GET", "/rwth/smil:engage-player_" + guid + "_presentation.smil/" + part)
+    req = conn.getresponse()
+    success = (req.status == 200)
+    if success:
+        data = req.read()
+        with open(name + "/" + part, "wb") as filewriter:
+            filewriter.write(data)
+            filewriter.close()
+    conn.close()
+    return success
+
+def download_elements(guid, name, elements):
+    parts = []
+    for elem in elements:
+        if elem != b"" and elem[:1] != b"#":
+            parts.append(elem)
+    progress = 0
+    parts_len = len(parts)
+    print("[", end="", flush=True)
+    for i in range(0, parts_len):
+        download_part(guid, name, parts[i].decode("utf-8"))
+        if math.floor(i / parts_len * 33) - progress > 0:
+            print("=", end="", flush=True)
+        progress = math.floor(i / parts_len * 33)
+    print("]")
+
+def download_m3u8(guid, name, element):
+    conn = http.client.HTTPSConnection("streaming.rwth-aachen.de")
+    conn.request("GET", "/rwth/smil:engage-player_" + guid + "_presentation.smil/" + element)
+    req = conn.getresponse()
+    success = (req.status == 200)
+    print("Status [" + str(req.status) + "] " + req.reason)
+    if success:
+        data = req.read()
+        with open(name + "/" + element, "wb") as filewriter:
+            filewriter.write(data)
+            filewriter.close()
+        download_elements(guid, name, data.split(b"\n"))
+    conn.close()
+    return success
 
 def main():
+    global qualities
     print("rwth-opencast-dwnldr 0.2")
     guid = get_argvar(1, "guid", "Please enter the guid of the video.")
     if not get_playlist(guid):
-        exit(1)
+        exit(2)
     name = get_argvar(2, "name", "Please enter a name for the video (without file endings)")
     check_folder(name)
     list_qualities()
@@ -100,9 +145,13 @@ def main():
     qindex = get_quality_index(quality)
     if qindex < 0:
         print("Cannot find the specified quality")
-        exit(2)
+        exit(3)
+    print("Starting download...")
+    if not download_m3u8(guid, name, qualities[qindex]["link"].decode("utf-8")):
+        exit(4)
 
 try:
     main()
 except KeyboardInterrupt:
     print("Error: The execution was interrupted")
+    exit(1)
